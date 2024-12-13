@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Dati Excel</title>
+</head>
+<body>
+    <h1>Gestione Dati Excel</h1>
+    <button onclick="downloadTemplate()">Scarica Template Excel</button>
+    <button onclick="generateFakeData()">Genera Dati Fake</button>
+    <button onclick="openAnonymizePopup()">Anonimizza Dati</button>
+
+    <!-- Popup per l'anonimizzazione -->
+    <div id="anonymizePopup" style="display: none;">
+        <h2>Seleziona il file da anonimizzare</h2>
+        <form id="anonymizeForm" enctype="multipart/form-data" method="POST" action="/anonymize-data">
+            <input type="file" id="fileInput" name="file" accept=".xlsx" required>
+            <button type="submit">Anonimizza</button>
+            <button type="button" onclick="closePopup()">Annulla</button>
+        </form>
+    </div>
+
+    <script>
+        function downloadTemplate() {
+            window.location.href = '/download-template';
+        }
+
+        function generateFakeData() {
+            window.location.href = '/generate-data';
+        }
+
+        function openAnonymizePopup() {
+            document.getElementById('anonymizePopup').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('anonymizePopup').style.display = 'none';
+        }
+
+        // Gestione del form per anonimizzare
+        const form = document.getElementById('anonymizeForm');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+
+            fetch('/anonymize-data', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob(); // Ottieni il file come blob
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Errore durante l\'anonimizzazione.');
+                    });
+                }
+            })
+            .then(blob => {
+                // Crea un link per scaricare il file
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'anonymized_data.xlsx'; // Nome del file scaricato
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            })
+            .catch(error => alert('Errore: ' + error.message));
+        });
+    </script>
+</body>
+</html>
